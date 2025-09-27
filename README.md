@@ -1,2 +1,2 @@
-# teste-clone-reddit
-Nesse teste irei clonar de forma simplificada o reddit. Teste realizado para admissão em uma vaga.
+# test-clone-reddit
+In this test, I will clone Reddit in a simplified format. This test was taken for admission to a job.

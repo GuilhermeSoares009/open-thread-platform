@@ -1,0 +1,419 @@
+openapi: 3.1.0
+info:
+  title: OpenThread API
+  version: 1.0.0
+  description: API for communities, posts, comments, and votes.
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /communities:
+    get:
+      summary: List communities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated communities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommunities'
+    post:
+      summary: Create community
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /communities/{communityId}:
+    get:
+      summary: Get community
+      parameters:
+        - $ref: '#/components/parameters/CommunityId'
+      responses:
+        '200':
+          description: Community
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /feed:
+    get:
+      summary: Paginated feed
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/CommunityIdQuery'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Paginated posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPosts'
+
+  /posts:
+    post:
+      summary: Create post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /posts/{postId}:
+    get:
+      summary: Get post
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200':
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /posts/{postId}/comments:
+    get:
+      summary: List comments for a post
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComments'
+    post:
+      summary: Add comment to a post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /votes:
+    post:
+      summary: Cast a vote
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteCreate'
+      responses:
+        '200':
+          description: Vote updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '201':
+          description: Vote created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /users/{userId}:
+    get:
+      summary: Get user profile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users/{userId}/activity:
+    get:
+      summary: Get user activity
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedActivity'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        minimum: 10
+        maximum: 50
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [hot, new, top]
+        default: hot
+    CommunityIdQuery:
+      name: community_id
+      in: query
+      schema:
+        type: string
+    CommunityId:
+      name: communityId
+      in: path
+      required: true
+      schema:
+        type: string
+    PostId:
+      name: postId
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        per_page: { type: integer }
+        total: { type: integer }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        username: { type: string }
+        avatar_url: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+
+    Community:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    CommunityCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string, maxLength: 80 }
+        slug: { type: string, maxLength: 80 }
+        description: { type: string, maxLength: 280 }
+
+    Post:
+      type: object
+      properties:
+        id: { type: string }
+        community_id: { type: string }
+        user_id: { type: string }
+        title: { type: string }
+        body: { type: string }
+        score: { type: integer }
+        comment_count: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    PostCreate:
+      type: object
+      required: [community_id, title, body]
+      properties:
+        community_id: { type: string }
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 8000 }
+
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        post_id: { type: string }
+        user_id: { type: string }
+        parent_id: { type: string, nullable: true }
+        depth: { type: integer }
+        body: { type: string }
+        score: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    CommentCreate:
+      type: object
+      required: [body]
+      properties:
+        parent_id: { type: string, nullable: true }
+        body: { type: string, maxLength: 2000 }
+
+    Vote:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        votable_type: { type: string }
+        votable_id: { type: string }
+        value: { type: integer, enum: [-1, 1] }
+
+    VoteCreate:
+      type: object
+      required: [votable_type, votable_id, value]
+      properties:
+        votable_type: { type: string, enum: [post, comment] }
+        votable_id: { type: string }
+        value: { type: integer, enum: [-1, 1] }
+
+    ActivityItem:
+      type: object
+      properties:
+        type: { type: string, enum: [post, comment, vote] }
+        payload: { type: object }
+        created_at: { type: string, format: date-time }
+
+    PaginatedCommunities:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Community' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+
+    PaginatedPosts:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Post' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+
+    PaginatedComments:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Comment' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+
+    PaginatedActivity:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/ActivityItem' }
+        pagination: { $ref: '#/components/schemas/Pagination' }

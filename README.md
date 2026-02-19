@@ -66,7 +66,7 @@ OpenThread is a community-driven discussion platform with communities, a ranked 
 - Static analysis: `vendor/bin/phpstan analyse`
 
 ## Figma token
-Create `.env.local` and set `FIGMA_TOKEN` there. Do not commit the token.
+Set `FIGMA_TOKEN` in `.env`. Do not commit the token.
 
 ## Contributing
 Use trunk-based development, small PRs, and follow `docs/pr-checklist.md`.

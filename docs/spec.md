@@ -10,6 +10,15 @@ OpenThread is a community-driven discussion platform focused on fast discovery a
 - Voting on posts and comments with idempotent behavior.
 - User profiles with basic activity view.
 - Comment and reply input with validation.
+- Theme toggle with dark default and light alternative.
+
+## UI-Driven Requirements (Figma)
+- Global layout with left sidebar (brand, Home, Perfil, community list) and top bar (theme toggle, avatar).
+- Home dashboard with summary stat cards and feed list.
+- Community page with banner image, avatar, description, member count, created date, and join/create actions.
+- Post detail with cover image, author header, and action menu.
+- Comment thread with nested indentation, connector line, and role badges (Autor, Resposta).
+- Comment composer in simple input and rich editor variants.
 
 ## Non-Functional Requirements
 - Performance: pagination on all lists, explicit indexes, avoid N+1, define p95 budget.
@@ -24,12 +33,21 @@ OpenThread is a community-driven discussion platform focused on fast discovery a
 - Reply to a post or to another comment.
 - Upvote/downvote a post or comment.
 - View a user profile and recent activity.
+- Join/leave a community.
 
 ## Business Rules
 - One vote per user per votable item.
 - Maximum comment depth is enforced.
 - Content length limits are enforced for posts and comments.
 - Soft delete for posts and comments; votes are removed on hard delete.
+- Author badge is shown on comments by the post author.
+- Reply badge is shown on nested comments.
+
+## Domain Model Notes
+- Community: name, slug, description, avatar_url, banner_url, members_count, created_at.
+- Post: title, body, cover_image_url, excerpt, community_id, author_id, score, comments_count.
+- Comment: body, parent_id, depth, author_id, score.
+- Vote: target_type + target_id, value (-1, 1), idempotent per user.
 
 ## API Contracts
 - Versioned base path: `/api/v1`.

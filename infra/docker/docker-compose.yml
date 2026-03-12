@@ -1,0 +1,97 @@
+services:
+  api-java:
+    build:
+      context: ../../apps/api-java
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-openthread}
+      DB_USER: ${POSTGRES_USER:-openthread}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-openthread}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    ports:
+      - '${API_PORT:-8080}:8080'
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api-java:8080/api/v1
+      NEXT_PUBLIC_API_BASE_URL: http://api-java:8080/api/v1
+      NODE_ENV: production
+    depends_on:
+      - api-java
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+
+  worker-go:
+    build:
+      context: ../../apps/worker-go
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis:6379
+      EVENT_STREAM_KEY: openthread.events
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-openthread}
+      POSTGRES_USER: ${POSTGRES_USER:-openthread}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openthread}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-openthread} -d ${POSTGRES_DB:-openthread}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    restart: unless-stopped
+    ports:
+      - '${JAEGER_UI_PORT:-16686}:16686'
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    restart: unless-stopped
+    command: ['--config=/etc/otel-collector-config.yaml']
+    volumes:
+      - ../observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - '${OTEL_GRPC_PORT:-4317}:4317'
+      - '${OTEL_HTTP_PORT:-4318}:4318'
+    depends_on:
+      - jaeger
+
+volumes:
+  pgdata:

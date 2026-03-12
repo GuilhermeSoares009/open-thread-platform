@@ -1,0 +1,16 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.env.local
+/.fleet
+/.idea
+/.vscode
+/.zed
+Thumbs.db
+/apps/web/.next
+/apps/web/node_modules
+/apps/web/out
+/apps/api-java/target
+/apps/worker-go/bin
